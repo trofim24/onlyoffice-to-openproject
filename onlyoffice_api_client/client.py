@@ -1,3 +1,4 @@
+# onlyoffice_api_client/client.py
 from .auth import OnlyOfficeAuth
 import requests
 import json
@@ -8,28 +9,35 @@ class OnlyOfficeClient:
     Main client for interacting with ONLYOFFICE API
     """
     
-    def __init__(self, portal_url: str):
+    def __init__(self, portal_url: str, verify_ssl: bool = True):
         """
         Initialize the ONLYOFFICE API client
         
         Args:
             portal_url (str): Your ONLYOFFICE portal URL
+            verify_ssl (bool): Whether to verify SSL certificates
         """
         self.portal_url = portal_url.rstrip('/')
-        self.auth = OnlyOfficeAuth(portal_url)
+        self.auth = OnlyOfficeAuth(portal_url, verify_ssl=verify_ssl)
+        self.verify_ssl = verify_ssl
     
-    def authenticate(self, username: str, password: str) -> Dict[str, Any]:
+    def authenticate(self, username: str, password: str, code: str = None) -> Dict[str, Any]:
         """
         Authenticate with the ONLYOFFICE API
         
         Args:
             username (str): Your ONLYOFFICE username
             password (str): Your ONLYOFFICE password
+            code (str, optional): Authentication code if required
             
         Returns:
             dict: The authentication result
         """
-        return self.auth.login(username, password)
+        return self.auth.login(
+            username=username, 
+            password=password,
+            code=code
+        )
     
     def get_people(self) -> Dict[str, Any]:
         """
@@ -43,18 +51,27 @@ class OnlyOfficeClient:
             
         endpoint = f"{self.portal_url}/api/2.0/people.json"
         
-        response = requests.get(
-            endpoint,
-            headers=self.auth.headers
-        )
-        
-        if response.status_code == 200:
-            return response.json()
-        else:
+        try:
+            response = requests.get(
+                endpoint,
+                headers=self.auth.headers,
+                verify=self.verify_ssl
+            )
+            
+            # Accept both 200 and 201 as success codes
+            if response.status_code in [200, 201]:
+                return response.json()
+            else:
+                return {
+                    "error": True,
+                    "status_code": response.status_code,
+                    "message": response.text
+                }
+        except requests.exceptions.RequestException as e:
             return {
                 "error": True,
-                "status_code": response.status_code,
-                "message": response.text
+                "exception": str(e),
+                "message": "Connection error occurred"
             }
     
     def get_files(self, folder_id: Optional[str] = None) -> Dict[str, Any]:
@@ -75,17 +92,25 @@ class OnlyOfficeClient:
             endpoint += f"/@folder/{folder_id}"
         endpoint += ".json"
         
-        response = requests.get(
-            endpoint,
-            headers=self.auth.headers
-        )
-        
-        if response.status_code == 200:
-            return response.json()
-        else:
+        try:
+            response = requests.get(
+                endpoint,
+                headers=self.auth.headers,
+                verify=self.verify_ssl
+            )
+            
+            # Accept both 200 and 201 as success codes
+            if response.status_code in [200, 201]:
+                return response.json()
+            else:
+                return {
+                    "error": True,
+                    "status_code": response.status_code,
+                    "message": response.text
+                }
+        except requests.exceptions.RequestException as e:
             return {
                 "error": True,
-                "status_code": response.status_code,
-                "message": response.text
+                "exception": str(e),
+                "message": "Connection error occurred"
             }
-
