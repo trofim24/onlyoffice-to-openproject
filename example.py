@@ -10,9 +10,10 @@ def main():
     
     # Get credentials from environment variables
     portal_url = os.getenv("ONLYOFFICE_PORTAL_URL", "https://yourportal.onlyoffice.com")
-    username = os.getenv("ONLYOFFICE_USERNAME", "string")
-    password = os.getenv("ONLYOFFICE_PASSWORD", "string")
+    username = os.getenv("ONLYOFFICE_USERNAME")
+    password = os.getenv("ONLYOFFICE_PASSWORD")
     auth_code = os.getenv("ONLYOFFICE_AUTH_CODE")  # Optional
+    auth_token = os.getenv("ONLYOFFICE_AUTH_TOKEN")  # Optional
     verify_ssl = os.getenv("VERIFY_SSL", "True").lower() == "true"
     
     if not portal_url or not username or not password:
@@ -20,7 +21,7 @@ def main():
         return
     
     # Initialize the client
-    client = OnlyOfficeClient(portal_url, verify_ssl=verify_ssl)
+    client = OnlyOfficeClient(portal_url, verify_ssl=verify_ssl, auth_token=auth_token)
     
     # Authenticate
     auth_result = client.authenticate(
@@ -43,18 +44,21 @@ def main():
     
     # Example of further API calls you could make:
     
-    # Get people
-    print("\nRetrieving people...")
-    people_result = client.get_people()
-    print("People result:")
-    print(json.dumps(people_result, indent=4))
-    
-    # Get files
-    print("\nRetrieving files...")
-    files_result = client.get_files()
-    print("Files result:")
-    print(json.dumps(files_result, indent=4))
+    # Get projects
+#    print("\nRetrieving my projects...")
+#    projects_result = client.get_projects()
+#    print("Projects result:")
+#    print(json.dumps(projects_result, indent=4))
 
+    # Get tasks
+    print("\nRetrieving my tasks...")
+    tasks_result = client.get_project_tasks(project_id=220, statuses=["open", "closed"])
+    print("Tasks result:")
+    print(json.dumps(tasks_result, indent=4))
+
+    output_file = "tasks_result.json"
+    with open(output_file, "w") as f:
+        json.dump(tasks_result, f, indent=4, ensure_ascii=False)
 
 if __name__ == "__main__":
     main()
